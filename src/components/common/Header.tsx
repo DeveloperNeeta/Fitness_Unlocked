@@ -1,9 +1,15 @@
 import React from 'react';
 import { useApp } from '../../contexts/AppContext';
-import { User, Settings, Heart } from 'lucide-react';
+import { useAuth } from '../../hooks/useAuth';
+import { User, Settings, Heart, LogOut } from 'lucide-react';
 
 const Header: React.FC = () => {
   const { user, currentView, setCurrentView } = useApp();
+  const { signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-100 px-4 py-3">
@@ -53,6 +59,14 @@ const Header: React.FC = () => {
 
           <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
             <Settings className="h-5 w-5" />
+          </button>
+
+          <button 
+            onClick={handleSignOut}
+            className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+            title="Sign Out"
+          >
+            <LogOut className="h-5 w-5" />
           </button>
         </div>
       </div>

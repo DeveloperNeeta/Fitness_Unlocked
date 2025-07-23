@@ -1,9 +1,15 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { useAuth } from '../hooks/useAuth';
+import { useUserProfile } from '../hooks/useUserProfile';
 import { User, BMIData, Workout, ChatMessage, Reminder, Achievement, FamilyProgress } from '../types';
 
 interface AppContextType {
   user: User | null;
-  setUser: (user: User) => void;
+  setUser: (user: User | null) => void;
+  authLoading: boolean;
+  profileLoading: boolean;
+  createUserProfile: (profileData: Omit<User, 'id' | 'email'>) => Promise<{ data: User | null; error: any }>;
+  updateUserProfile: (updates: Partial<User>) => Promise<{ data: User | null; error: any }>;
   currentView: 'individual' | 'family';
   setCurrentView: (view: 'individual' | 'family') => void;
   bmiData: BMIData | null;
@@ -39,7 +45,8 @@ interface AppProviderProps {
 }
 
 export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const { user: authUser, loading: authLoading } = useAuth();
+  const { profile, loading: profileLoading, createProfile, updateProfile } = useUserProfile(authUser);
   const [currentView, setCurrentView] = useState<'individual' | 'family'>('individual');
   const [bmiData, setBmiData] = useState<BMIData | null>(null);
   const [currentWorkout, setCurrentWorkout] = useState<Workout | null>(null);
@@ -56,6 +63,19 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const [waterIntake, setWaterIntake] = useState(0);
   const [dailySteps, setDailySteps] = useState(0);
 
+  const setUser = (user: User | null) => {
+    // This function is kept for compatibility but profile updates should use updateUserProfile
+    console.warn('setUser called - consider using updateUserProfile for profile updates');
+  };
+
+  const createUserProfile = async (profileData: Omit<User, 'id' | 'email'>) => {
+    return await createProfile(profileData);
+  };
+
+  const updateUserProfile = async (updates: Partial<User>) => {
+    return await updateProfile(updates);
+  };
+
   const addChatMessage = (message: ChatMessage) => {
     setChatMessages(prev => [...prev, message]);
   };
@@ -70,8 +90,12 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
   return (
     <AppContext.Provider value={{
-      user,
+      user: profile,
       setUser,
+      authLoading,
+      profileLoading,
+      createUserProfile,
+      updateUserProfile,
       currentView,
       setCurrentView,
       bmiData,

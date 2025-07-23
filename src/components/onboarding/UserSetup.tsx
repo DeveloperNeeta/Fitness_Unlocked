@@ -1,14 +1,12 @@
 import React, { useState } from 'react';
 import { useApp } from '../../contexts/AppContext';
-import { User } from '../../types';
 import { Heart, ArrowRight } from 'lucide-react';
 
 const UserSetup: React.FC = () => {
-  const { setUser } = useApp();
+  const { createUserProfile } = useApp();
   const [formData, setFormData] = useState({
     name: '',
     age: '',
-    email: '',
     height: '',
     weight: '',
     culturalBackground: '',
@@ -16,6 +14,8 @@ const UserSetup: React.FC = () => {
     ayurvedicType: 'kapha' as const,
     goals: [] as string[]
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const culturalOptions = [
     'Indian', 'Chinese', 'Mediterranean', 'Latin American', 'Middle Eastern', 
@@ -38,25 +38,34 @@ const UserSetup: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const newUser: User = {
-      id: Date.now().toString(),
+    setLoading(true);
+    setError('');
+
+    const profileData = {
       name: formData.name,
       age: Number(formData.age),
-      email: formData.email,
       height: Number(formData.height),
       weight: Number(formData.weight),
       culturalBackground: formData.culturalBackground,
       fitnessLevel: formData.fitnessLevel,
       ayurvedicType: formData.ayurvedicType,
       goals: formData.goals,
-      familyId: 'family-1' // Demo family ID
+      familyId: null
     };
 
-    setUser(newUser);
+    createUserProfile(profileData)
+      .then(({ error }) => {
+        if (error) {
+          setError('Failed to create profile. Please try again.');
+          console.error('Profile creation error:', error);
+        }
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
 
-  const isFormValid = formData.name && formData.age && formData.email && 
+  const isFormValid = formData.name && formData.age &&
                      formData.height && formData.weight && formData.culturalBackground;
 
   return (
@@ -97,18 +106,7 @@ const UserSetup: React.FC = () => {
                 required
               />
             </div>
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-            <input
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-              placeholder="your.email@example.com"
-              required
-            />
           </div>
 
           {/* Physical Information */}
@@ -206,13 +204,25 @@ const UserSetup: React.FC = () => {
             </div>
           </div>
 
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          )}
+
           <button
             type="submit"
-            disabled={!isFormValid}
+            disabled={!isFormValid || loading}
             className="w-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 px-6 rounded-lg font-medium transition-all flex items-center justify-center space-x-2"
           >
-            <span>Start Your Wellness Journey</span>
-            <ArrowRight className="h-5 w-5" />
+            {loading ? (
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            ) : (
+              <>
+                <span>Start Your Wellness Journey</span>
+                <ArrowRight className="h-5 w-5" />
+              </>
+            )}
           </button>
         </form>
       </div>
