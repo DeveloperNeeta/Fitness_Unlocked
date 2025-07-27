@@ -43,6 +43,9 @@ export const useUserProfile = (authUser: SupabaseUser | null) => {
           return;
         }
       }
+
+      if (error && error.code !== 'PGRST116') {
+      }
         throw error;
       }
 
