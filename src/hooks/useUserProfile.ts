@@ -26,7 +26,23 @@ export const useUserProfile = (authUser: SupabaseUser | null) => {
         .eq('user_id', authUser.id)
         .single();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
+        // Handle case where table doesn't exist yet
+        if (error.code === '42P01') {
+          console.warn('Database tables not yet created. Please set up your Supabase database.');
+          setProfile(null);
+          setLoading(false);
+          return;
+        }
+        
+        // Handle case where no profile exists yet
+        if (error.code !== 'PGRST116') {
+          console.error('Error fetching profile:', error);
+          setProfile(null);
+          setLoading(false);
+          return;
+        }
+      }
         throw error;
       }
 
@@ -47,7 +63,8 @@ export const useUserProfile = (authUser: SupabaseUser | null) => {
         setProfile(userProfile);
       }
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      console.warn('Profile fetch failed - this is expected if database is not set up yet:', error);
+      setProfile(null);
     } finally {
       setLoading(false);
     }
@@ -78,6 +95,12 @@ export const useUserProfile = (authUser: SupabaseUser | null) => {
         .single();
 
       if (error) {
+        // Handle case where table doesn't exist
+        if (error.code === '42P01') {
+          const tableError = new Error('Database not set up. Please connect to Supabase and create the required tables.');
+          return { data: null, error: tableError };
+        }
+        
         console.error('Supabase error:', error);
         throw error;
       }
@@ -107,7 +130,9 @@ export const useUserProfile = (authUser: SupabaseUser | null) => {
       let errorMessage = 'Failed to create profile. Please try again.';
       if (error && typeof error === 'object' && 'message' in error) {
         const supabaseError = error as any;
-        if (supabaseError.code === '23505') {
+        if (supabaseError.code === '42P01') {
+          errorMessage = 'Database not set up. Please connect to Supabase and create the required tables.';
+        } else if (supabaseError.code === '23505') {
           errorMessage = 'A profile already exists for this user.';
         } else if (supabaseError.code === '23514') {
           errorMessage = 'Please check that all values are within valid ranges.';
@@ -142,7 +167,14 @@ export const useUserProfile = (authUser: SupabaseUser | null) => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        // Handle case where table doesn't exist
+        if (error.code === '42P01') {
+          const tableError = new Error('Database not set up. Please connect to Supabase and create the required tables.');
+          return { data: null, error: tableError };
+        }
+        throw error;
+      }
 
       const updatedProfile: User = {
         ...profile,
