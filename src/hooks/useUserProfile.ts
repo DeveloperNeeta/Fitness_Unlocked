@@ -56,6 +56,9 @@ export const useUserProfile = (authUser: SupabaseUser | null) => {
   const createProfile = async (profileData: Omit<User, 'id' | 'email'>) => {
     if (!authUser) throw new Error('No authenticated user');
 
+    console.log('Creating profile with data:', profileData);
+    console.log('Auth user:', authUser.id);
+
     try {
       const { data, error } = await supabase
         .from('user_profiles')
@@ -74,7 +77,12 @@ export const useUserProfile = (authUser: SupabaseUser | null) => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+
+      console.log('Profile created successfully:', data);
 
       const newProfile: User = {
         id: data.id,
@@ -94,6 +102,20 @@ export const useUserProfile = (authUser: SupabaseUser | null) => {
       return { data: newProfile, error: null };
     } catch (error) {
       console.error('Error creating profile:', error);
+      
+      // Provide more specific error messages
+      let errorMessage = 'Failed to create profile. Please try again.';
+      if (error && typeof error === 'object' && 'message' in error) {
+        const supabaseError = error as any;
+        if (supabaseError.code === '23505') {
+          errorMessage = 'A profile already exists for this user.';
+        } else if (supabaseError.code === '23514') {
+          errorMessage = 'Please check that all values are within valid ranges.';
+        } else if (supabaseError.message) {
+          errorMessage = supabaseError.message;
+        }
+      }
+      
       return { data: null, error };
     }
   };

@@ -41,8 +41,33 @@ const UserSetup: React.FC = () => {
     setLoading(true);
     setError('');
 
+    // Validate form data
+    if (!formData.name.trim()) {
+      setError('Name is required');
+      setLoading(false);
+      return;
+    }
+
+    if (Number(formData.age) < 13 || Number(formData.age) > 120) {
+      setError('Age must be between 13 and 120');
+      setLoading(false);
+      return;
+    }
+
+    if (Number(formData.height) < 100 || Number(formData.height) > 250) {
+      setError('Height must be between 100 and 250 cm');
+      setLoading(false);
+      return;
+    }
+
+    if (Number(formData.weight) < 30 || Number(formData.weight) > 300) {
+      setError('Weight must be between 30 and 300 kg');
+      setLoading(false);
+      return;
+    }
+
     const profileData = {
-      name: formData.name,
+      name: formData.name.trim(),
       age: Number(formData.age),
       height: Number(formData.height),
       weight: Number(formData.weight),
@@ -50,15 +75,38 @@ const UserSetup: React.FC = () => {
       fitnessLevel: formData.fitnessLevel,
       ayurvedicType: formData.ayurvedicType,
       goals: formData.goals,
-      familyId: null
+      familyId: undefined
     };
 
+    console.log('Submitting profile data:', profileData);
+
     createUserProfile(profileData)
-      .then(({ error }) => {
+      .then(({ data, error }) => {
         if (error) {
-          setError('Failed to create profile. Please try again.');
           console.error('Profile creation error:', error);
+          
+          // Set more specific error message
+          if (error && typeof error === 'object' && 'message' in error) {
+            const supabaseError = error as any;
+            if (supabaseError.code === '23505') {
+              setError('A profile already exists for this account.');
+            } else if (supabaseError.code === '23514') {
+              setError('Please check that all values are within valid ranges.');
+            } else if (supabaseError.message) {
+              setError(`Error: ${supabaseError.message}`);
+            } else {
+              setError('Failed to create profile. Please try again.');
+            }
+          } else {
+            setError('Failed to create profile. Please try again.');
+          }
+        } else {
+          console.log('Profile created successfully:', data);
         }
+      })
+      .catch((err) => {
+        console.error('Unexpected error:', err);
+        setError('An unexpected error occurred. Please try again.');
       })
       .finally(() => {
         setLoading(false);

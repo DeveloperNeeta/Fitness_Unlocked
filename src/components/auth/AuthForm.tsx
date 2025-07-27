@@ -41,7 +41,8 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onToggleMode }) => {
       if (error) {
         setError(error.message);
       } else if (mode === 'signup') {
-        setError('Check your email for the confirmation link!');
+        // For development, we'll disable email confirmation
+        // setError('Check your email for the confirmation link!');
       }
     } catch (err) {
       setError('An unexpected error occurred');
@@ -122,7 +123,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode, onToggleMode }) => {
 
           {error && (
             <div className={`p-3 rounded-lg text-sm ${
-              error.includes('Check your email') 
+              error.includes('Check your email') || error.includes('confirmation')
                 ? 'bg-green-50 text-green-700 border border-green-200'
                 : 'bg-red-50 text-red-700 border border-red-200'
             }`}>
