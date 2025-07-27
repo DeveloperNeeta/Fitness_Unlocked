@@ -93,7 +93,11 @@ const UserSetup: React.FC = () => {
             } else if (supabaseError.code === '23514') {
               setError('Please check that all values are within valid ranges.');
             } else if (supabaseError.message) {
-              setError(`Error: ${supabaseError.message}`);
+              if (supabaseError.message.includes('Database not set up')) {
+                setError('Please connect to Supabase and set up the database tables first. Click "Connect to Supabase" in the header.');
+              } else {
+                setError(`Error: ${supabaseError.message}`);
+              }
             } else {
               setError('Failed to create profile. Please try again.');
             }
