@@ -45,7 +45,6 @@ export const useUserProfile = (authUser: SupabaseUser | null) => {
       }
 
       if (error && error.code !== 'PGRST116') {
-      }
         throw error;
       }
 
